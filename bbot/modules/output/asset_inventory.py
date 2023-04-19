@@ -86,7 +86,7 @@ class asset_inventory(CSV):
                     getattr(asset, "host", ""),
                     getattr(asset, "provider", ""),
                     ",".join(str(x) for x in getattr(asset, "ip_addresses", set())),
-                    "Active" if (asset.ports) else ("Inactive" if self.open_port_producers else "N/A"),
+                    "Active" if asset.ports else "N/A",
                     ",".join(str(x) for x in getattr(asset, "ports", set())),
                     severity_map[getattr(asset, "risk_rating", "")],
                     ",".join(findings_and_vulns),
