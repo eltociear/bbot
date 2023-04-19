@@ -40,7 +40,6 @@ class asset_inventory(CSV):
         return ret
 
     def handle_event(self, event):
-        self.emit_contents()
         if (
             (not event._internal)
             and str(event.module) != "speculate"
@@ -98,7 +97,7 @@ class asset_inventory(CSV):
         if self._file is not None:
             self.info(f"Saved asset-inventory output to {self.output_file}")
 
-    def emit_contents(self):
+    def finish(self):
         if self.use_previous and not self.emitted_contents:
             self.emitted_contents = True
             if self.output_file.is_file():
