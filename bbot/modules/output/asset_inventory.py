@@ -85,14 +85,14 @@ class asset_inventory(CSV):
         for asset in sorted(self.assets.values(), key=lambda a: str(a.host)):
             findings_and_vulns = asset.findings.union(asset.vulnerabilities)
             row = {
-                getattr(asset, "host", ""),
-                getattr(asset, "provider", ""),
-                ",".join(str(x) for x in getattr(asset, "ip_addresses", set())),
-                "Active" if asset.ports else "N/A",
-                ",".join(str(x) for x in getattr(asset, "ports", set())),
-                severity_map[getattr(asset, "risk_rating", "")],
-                ",".join(findings_and_vulns),
-                ",".join(str(x) for x in getattr(asset, "technologies", set())),
+                "Host": getattr(asset, "host", ""),
+                "Provider": getattr(asset, "provider", ""),
+                "IP(s)": ",".join(str(x) for x in getattr(asset, "ip_addresses", set())),
+                "Status": "Active" if asset.ports else "N/A",
+                "Open Ports": ",".join(str(x) for x in getattr(asset, "ports", set())),
+                "Risk Rating": severity_map[getattr(asset, "risk_rating", "")],
+                "Findings": ",".join(findings_and_vulns),
+                "Description": ",".join(str(x) for x in getattr(asset, "technologies", set())),
             }
             custom_fields = self.custom_fields.get(asset.host, None)
             if custom_fields is not None:
