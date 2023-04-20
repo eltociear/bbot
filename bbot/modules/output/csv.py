@@ -20,9 +20,11 @@ class CSV(BaseOutputModule):
 
     @property
     def writer(self):
+        file_exists = self.output_file.is_file()
         if self._writer is None:
-            self._writer = csv.writer(self.file)
-            self._writer.writerow(self.header_row)
+            self._writer = csv.DictWriter(self.file, fieldnames=self.header_row)
+            if not file_exists:
+                self._writer.writeheader()
         return self._writer
 
     @property
@@ -39,14 +41,16 @@ class CSV(BaseOutputModule):
 
     def handle_event(self, event):
         self.writerow(
-            [
-                getattr(event, "type", ""),
-                getattr(event, "data", ""),
-                ",".join(str(x) for x in getattr(event, "resolved_hosts", set()) if self.helpers.is_ip(x)),
-                str(getattr(event, "module", "")),
-                str(getattr(event, "scope_distance", "")),
-                ",".join(sorted(list(getattr(event, "tags", [])))),
-            ]
+            {
+                "Event type": getattr(event, "type", ""),
+                "Event data": getattr(event, "data", ""),
+                "IP Address": ",".join(
+                    str(x) for x in getattr(event, "resolved_hosts", set()) if self.helpers.is_ip(x)
+                ),
+                "Source Module": str(getattr(event, "module", "")),
+                "Scope Distance": str(getattr(event, "scope_distance", "")),
+                "Event Tags": ",".join(sorted(list(getattr(event, "tags", [])))),
+            }
         )
 
     def cleanup(self):

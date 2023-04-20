@@ -31,11 +31,13 @@ class asset_inventory(CSV):
 
     def setup(self):
         self.assets = {}
+        self.custom_fields = {}
         self.open_port_producers = "httpx" in self.scan.modules or any(
             ["portscan" in m.flags for m in self.scan.modules.values()]
         )
         self.use_previous = self.config.get("use_previous", False)
         self.emitted_contents = False
+        self._ran_hooks = False
         ret = super().setup()
         return ret
 
@@ -79,20 +81,23 @@ class asset_inventory(CSV):
                     break
 
     def report(self):
+        self._run_hooks()
         for asset in sorted(self.assets.values(), key=lambda a: str(a.host)):
             findings_and_vulns = asset.findings.union(asset.vulnerabilities)
-            self.writerow(
-                [
-                    getattr(asset, "host", ""),
-                    getattr(asset, "provider", ""),
-                    ",".join(str(x) for x in getattr(asset, "ip_addresses", set())),
-                    "Active" if asset.ports else "N/A",
-                    ",".join(str(x) for x in getattr(asset, "ports", set())),
-                    severity_map[getattr(asset, "risk_rating", "")],
-                    ",".join(findings_and_vulns),
-                    ",".join(str(x) for x in getattr(asset, "technologies", set())),
-                ]
-            )
+            row = {
+                getattr(asset, "host", ""),
+                getattr(asset, "provider", ""),
+                ",".join(str(x) for x in getattr(asset, "ip_addresses", set())),
+                "Active" if asset.ports else "N/A",
+                ",".join(str(x) for x in getattr(asset, "ports", set())),
+                severity_map[getattr(asset, "risk_rating", "")],
+                ",".join(findings_and_vulns),
+                ",".join(str(x) for x in getattr(asset, "technologies", set())),
+            }
+            custom_fields = self.custom_fields.get(asset.host, None)
+            if custom_fields is not None:
+                row.update(custom_fields)
+            self.writerow(row)
 
         if self._file is not None:
             self.info(f"Saved asset-inventory output to {self.output_file}")
@@ -122,6 +127,18 @@ class asset_inventory(CSV):
                 self.warning(
                     f"use_previous=True was set but no previous asset inventory was found at {self.output_file}"
                 )
+
+    def _run_hooks(self):
+        """
+        modules can use self.asset_inventory_hook() to add custom functionality to asset_inventory
+        the asset inventory module is passed in as the first argument to the method.
+        """
+        if not self._ran_hooks:
+            self._ran_hooks = True
+            for module in self.scan.modules:
+                hook = getattr(module, "asset_inventory_hook", None)
+                if hook is not None and callable(hook):
+                    hook(self)
 
 
 class Asset:
