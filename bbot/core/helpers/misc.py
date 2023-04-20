@@ -464,8 +464,9 @@ def chain_lists(l, try_files=False, msg=None):
     for entry in l:
         for s in entry.split(","):
             f = s.strip()
-            f_path = Path(f).resolve()
-            if try_files and (f_path.exists() and not f_path.is_dir()):
+            f_path = Path(f)
+            is_valid_file = (f_path.resolve().is_file() or f_path.is_fifo())
+            if try_files and is_valid_file:
                 if msg is not None:
                     new_msg = str(msg).format(filename=f_path)
                     log.info(new_msg)
