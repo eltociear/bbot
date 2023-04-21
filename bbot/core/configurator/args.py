@@ -17,8 +17,6 @@ for m, c in module_loader.preloaded().items():
 
 
 class BBOTArgumentParser(argparse.ArgumentParser):
-    _dummy = False
-
     def parse_args(self, *args, **kwargs):
         """
         Allow space or comma-separated entries for modules and targets
@@ -33,24 +31,22 @@ class BBOTArgumentParser(argparse.ArgumentParser):
         ret.flags = chain_lists(ret.flags)
         ret.require_flags = chain_lists(ret.require_flags)
         for m in ret.modules:
-            if m not in module_choices and not self._dummy:
+            if m not in module_choices:
                 match_and_exit(m, module_choices, msg="module")
         for m in ret.exclude_modules:
-            if m not in module_choices and not self._dummy:
+            if m not in module_choices:
                 match_and_exit(m, module_choices, msg="module")
         for m in ret.output_modules:
-            if m not in output_module_choices and not self._dummy:
+            if m not in output_module_choices:
                 match_and_exit(m, output_module_choices, msg="output module")
         for f in set(ret.flags + ret.require_flags):
-            if f not in flag_choices and not self._dummy:
-                if f not in flag_choices and not self._dummy:
+            if f not in flag_choices:
+                if f not in flag_choices:
                     match_and_exit(f, flag_choices, msg="flag")
         return ret
 
 
-class DummyArgumentParser(BBOTArgumentParser):
-    _dummy = True
-
+class DummyArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         pass
 
